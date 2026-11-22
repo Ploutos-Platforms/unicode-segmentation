@@ -277,6 +277,24 @@ fn test_grapheme_cursor_incb_consonant_chunked() {
 }
 
 #[test]
+fn test_prev_boundary_rejects_non_char_boundary() {
+    use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete};
+    // 15 ASCII bytes, then \u{0299} (2 bytes, 15..17); offset 16 is inside it.
+    let s = "aaaaaaaaaaaaaaa\u{0299}";
+    assert_eq!(s.len(), 17);
+    let mut c = GraphemeCursor::new(16, s.len(), false);
+    assert_eq!(
+        c.prev_boundary(s, 0),
+        Err(GraphemeIncomplete::InvalidOffset)
+    );
+    let mut c = GraphemeCursor::new(16, s.len(), false);
+    assert_eq!(
+        c.next_boundary(s, 0),
+        Err(GraphemeIncomplete::InvalidOffset)
+    );
+}
+
+#[test]
 fn test_words() {
     use crate::testdata::TEST_WORD;
 

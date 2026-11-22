@@ -789,7 +789,11 @@ impl GraphemeCursor {
         if self.offset > self.len || chunk_start > self.offset {
             return Err(GraphemeIncomplete::InvalidOffset);
         }
-        let mut iter = chunk[self.offset.saturating_sub(chunk_start)..].chars();
+        let offset_in_chunk = self.offset.saturating_sub(chunk_start);
+        if offset_in_chunk <= chunk.len() && !chunk.is_char_boundary(offset_in_chunk) {
+            return Err(GraphemeIncomplete::InvalidOffset);
+        }
+        let mut iter = chunk[offset_in_chunk..].chars();
         let mut ch = match iter.next() {
             Some(ch) => ch,
             None => return Err(GraphemeIncomplete::NextChunk),
@@ -895,6 +899,9 @@ impl GraphemeCursor {
         // below then reports `PrevChunk` as for any chunk without a
         // preceding boundary.
         let end = self.offset.saturating_sub(chunk_start).min(chunk.len());
+        if !chunk.is_char_boundary(end) {
+            return Err(GraphemeIncomplete::InvalidOffset);
+        }
         let mut iter = chunk[..end].chars().rev();
         let mut ch = iter.next().unwrap();
         loop {
